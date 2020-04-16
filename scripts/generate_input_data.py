@@ -45,13 +45,10 @@ def main():
 
     b = b.reshape(-1, 1)
     solution = np.linalg.solve(a, b)
-    print(a)
-    print(b)
     check = np.allclose(np.dot(a, solution), b)
     if not check:
         raise RuntimeError("Something went horribly wrong")
     csv_out = np.append(a, b, axis=1)
-    print(csv_out)
 
     save_to_csv(csv_out_path, csv_out, size=csv_out.shape[0])
     solution = solution.transpose()
