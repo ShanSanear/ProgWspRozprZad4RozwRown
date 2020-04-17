@@ -3,6 +3,7 @@
 #include <fstream>
 #include <filesystem>
 
+const int DECIMAL_PRECISION = 6;
 using matrix = std::vector<std::vector<double>>;
 namespace fs = std::filesystem;
 
