@@ -3,4 +3,4 @@ project(ProgWspRozprZad4RozwRown)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(ProgWspRozprZad4RozwRown main.cpp)
+add_executable(ProgWspRozprZad4RozwRown src/main.cpp)
