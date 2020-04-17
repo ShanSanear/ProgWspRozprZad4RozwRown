@@ -1,8 +1,9 @@
-
+#include <omp.h>
 #include <vector>
 #include <fstream>
 #include <filesystem>
 #include <iterator>
+#include "argument_parsing.cpp"
 
 const int DECIMAL_PRECISION = 6;
 using matrix = std::vector<std::vector<double>>;
@@ -43,9 +44,9 @@ matrix &first_stage(matrix &c) {
     double val;
     int n = c.size();
     for (int r = 0; r < n - 1; r++) {
-        for (int i = r+1; i < n; i++) {
-            for (int j = r+1; j < n+1; j++) {
-                val = c[i][j] - (c[i][r]/c[r][r] * c[r][j]);
+        for (int i = r + 1; i < n; i++) {
+            for (int j = r + 1; j < n + 1; j++) {
+                val = c[i][j] - (c[i][r] / c[r][r] * c[r][j]);
                 c[i][j] = val;
             }
         }
@@ -58,7 +59,7 @@ std::vector<double> second_stage(const matrix &c) {
     std::vector<double> x(n);
     double s;
     x[n - 1] = c[n - 1][n] / c[n - 1][n - 1];
-    for (int i = n-2; i >= 0; i--) {
+    for (int i = n - 2; i >= 0; i--) {
         s = 0;
         for (int r = i; r < n; r++) {
             s = s + c[i][r] * x[r];
@@ -77,6 +78,7 @@ void gauss(matrix c) {
 
 
 int main(int argc, char *argv[]) {
+    auto result = parse_arguments(argc, argv);
     fs::path input_path(fs::absolute("input4.csv"));
     matrix input_matrix = parse_csv(input_path);
     gauss(input_matrix);
