@@ -1,4 +1,5 @@
 import argparse
+import time
 
 import numpy as np
 
@@ -40,12 +41,18 @@ def main():
     # Example data
     #a = np.array([[2, 1, 4], [3, 2, -1], [-1, 5, 2]])
     #b = np.array([[-1], [2], [-7]])
+    start = time.time()
     a = generate_matrix(n, n, lower, higher)
     b = generate_matrix(n, 1, lower, higher)
-
+    end_generating_matrixes = time.time()
     b = b.reshape(-1, 1)
     solution = np.linalg.solve(a, b)
+    end_solving = time.time()
     check = np.allclose(np.dot(a, solution), b)
+    end_checking = time.time()
+    print(f"Generating matrixes took {end_generating_matrixes - start} seconds")
+    print(f"Solving took {end_solving - end_generating_matrixes} seconds")
+    print(f"Checking took {end_checking - end_solving} seconds")
     if not check:
         raise RuntimeError("Something went horribly wrong")
     csv_out = np.append(a, b, axis=1)
