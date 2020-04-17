@@ -45,11 +45,8 @@ matrix &first_stage(matrix &c) {
     for (int r = 0; r < n - 1; r++) {
         for (int i = r+1; i < n; i++) {
             for (int j = r+1; j < n+1; j++) {
-                printf("%f - (%f/%f * %f)\n", c[i][j], c[i][r],c[r][r], c[r][j]);
                 val = c[i][j] - (c[i][r]/c[r][r] * c[r][j]);
                 c[i][j] = val;
-                printf("r: %d, i: %d, j: %d\n", r, i, j);
-                printf("Current value: %f\n", val);
             }
         }
     }
@@ -65,9 +62,7 @@ std::vector<double> second_stage(const matrix &c) {
         s = 0;
         for (int r = i; r < n; r++) {
             s = s + c[i][r] * x[r];
-            printf("%f\n", s);
         }
-        printf("Output: %f\n", (c[i][n] - s) / c[i][i]);
         x[i] = (c[i][n] - s) / c[i][i];
     }
     return x;
@@ -76,19 +71,13 @@ std::vector<double> second_stage(const matrix &c) {
 void gauss(matrix c) {
     c = first_stage(c);
 
-//    for (const std::vector<double>& inner_row: c) {
-//        for (double single_cell : inner_row) {
-//            printf("%f\t", single_cell);
-//        }
-//        printf("\n");
-//    }
     std::vector<double> x = second_stage(c);
-    save_matrix(x, "out.csv");
+    save_matrix(x, "sol4Cpp.csv");
 }
 
 
 int main(int argc, char *argv[]) {
-    fs::path input_path(fs::absolute("input3.csv"));
+    fs::path input_path(fs::absolute("input4.csv"));
     matrix input_matrix = parse_csv(input_path);
     gauss(input_matrix);
     return 0;
