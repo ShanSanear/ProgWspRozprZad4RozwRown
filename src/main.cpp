@@ -10,6 +10,15 @@ const int OUTPUT_TIME_DECIMAL_PRECISION = 5;
 using matrix = std::vector<std::vector<double>>;
 namespace fs = std::filesystem;
 
+struct DataloggerEntry {
+    long double Tp;
+    long double Ts;
+    int process_count;
+    bool is_schedule_static;
+    int chunk_size;
+
+};
+
 matrix parse_csv(const fs::path &input_csv_file) {
     std::ifstream data(input_csv_file);
     std::string line;
