@@ -3,7 +3,6 @@
 #include <fstream>
 #include <filesystem>
 #include <iterator>
-#include "argument_parsing.cpp"
 
 const int OUTPUT_DATA_DECIMAL_PRECISION = 6;
 const int OUTPUT_TIME_DECIMAL_PRECISION = 5;
