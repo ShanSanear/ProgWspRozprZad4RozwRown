@@ -101,6 +101,7 @@ int main(int argc, char *argv[]) {
     fs::path input_path(fs::absolute(input_file));
     if (!fs::exists(input_path)) {
         printf("Provided file: %s doesnt exists, terminating.\n", input_path.string().c_str());
+        exit(1);
     }
     printf("Parsing input csv file\n");
     matrix c = parse_csv(input_path);
