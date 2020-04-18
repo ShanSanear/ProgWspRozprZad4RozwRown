@@ -6,7 +6,7 @@
 #include "argument_parsing.cpp"
 
 const int DECIMAL_PRECISION = 6;
-using matrix = std::vector<std::vector<long double>>;
+using matrix = std::vector<std::vector<double>>;
 namespace fs = std::filesystem;
 
 matrix parse_csv(const fs::path &input_csv_file) {
@@ -16,7 +16,7 @@ matrix parse_csv(const fs::path &input_csv_file) {
     std::getline(data, line);
     matrix parsed_csv;
     while (std::getline(data, line)) {
-        std::vector<long double> parsedRow;
+        std::vector<double> parsedRow;
         std::stringstream s(line);
         std::string cell;
         while (std::getline(s, cell, ';')) {
@@ -28,7 +28,7 @@ matrix parse_csv(const fs::path &input_csv_file) {
     return parsed_csv;
 };
 
-void save_matrix(const std::vector<long double> &row, const std::string &output_file_path) {
+void save_matrix(const std::vector<double> &row, const std::string &output_file_path) {
     std::ofstream output(output_file_path);
 
     output << row.size() << std::endl;
@@ -56,10 +56,10 @@ matrix &first_stage(matrix &c, bool paralelize) {
 }
 
 
-std::vector<long double> second_stage(const matrix &c) {
+std::vector<double> second_stage(const matrix &c) {
     int n = c.size();
-    std::vector<long double> x(n);
-    long double s;
+    std::vector<double> x(n);
+    double s;
     x[n - 1] = c[n - 1][n] / c[n - 1][n - 1];
     for (int i = n - 2; i >= 0; i--) {
         s = 0;
@@ -71,13 +71,13 @@ std::vector<long double> second_stage(const matrix &c) {
     return x;
 }
 
-std::vector<long double> gauss(matrix c, bool paralelize) {
+std::vector<double> gauss(matrix c, bool paralelize) {
 
     printf("Calculating first stage\n");
     c = first_stage(c, paralelize);
 
     printf("Calculating second stage\n");
-    std::vector<long double> x = second_stage(c);
+    std::vector<double> x = second_stage(c);
     return x;
 
 }
@@ -96,15 +96,17 @@ int main(int argc, char *argv[]) {
         copy_of_original[i] = c[i];
     }
     printf("finished creating copy\n");
-    long double start_time = omp_get_wtime();
-    std::vector<long double> x = gauss(c, true);
-    long double end_time = omp_get_wtime();
-    printf("Parallized it took: %Lf seconds\n", end_time - start_time);
+    double start_time = omp_get_wtime();
+    std::vector<double> x_output = gauss(c, true);
+    double end_time = omp_get_wtime();
+    double Tp = end_time - start_time;
+    printf("Parallized it took: %f seconds\n", Tp);
     start_time = omp_get_wtime();
-    std::vector<long double> x_p = gauss(copy_of_original, false);
+    std::vector<double> x_p = gauss(copy_of_original, false);
     end_time = omp_get_wtime();
-    printf("Sequential it took: %Lf seconds\n", end_time - start_time);
+    double Ts = end_time - start_time;
+    printf("Sequential it took: %f seconds\n", Ts);
     printf("Saving output\n");
-    save_matrix(x, "solCpp.csv");
+    save_matrix(x_output, "solCpp.csv");
     return 0;
 }
