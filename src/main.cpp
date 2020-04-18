@@ -5,7 +5,8 @@
 #include <iterator>
 #include "argument_parsing.cpp"
 
-const int DECIMAL_PRECISION = 6;
+const int OUTPUT_DATA_DECIMAL_PRECISION = 6;
+const int OUTPUT_TIME_DECIMAL_PRECISION = 5;
 using matrix = std::vector<std::vector<double>>;
 namespace fs = std::filesystem;
 
@@ -33,7 +34,7 @@ void save_matrix(const std::vector<double> &row, const std::string &output_file_
 
     output << row.size() << std::endl;
     std::ostringstream oss;
-    oss << std::fixed << std::setprecision(DECIMAL_PRECISION);
+    oss << std::fixed << std::setprecision(OUTPUT_DATA_DECIMAL_PRECISION);
     oss.str(std::string());
     std::copy(row.begin(), row.end() - 1, std::ostream_iterator<double>(oss, ";"));
     std::copy(row.end() - 1, row.end(), std::ostream_iterator<double>(oss));
@@ -71,10 +72,10 @@ std::vector<double> second_stage(const matrix &c) {
     return x;
 }
 
-std::vector<double> gauss(matrix c, bool paralelize) {
+std::vector<double> gauss(matrix c, bool parallelize) {
 
     printf("Calculating first stage\n");
-    c = first_stage(c, paralelize);
+    c = first_stage(c, parallelize);
 
     printf("Calculating second stage\n");
     std::vector<double> x = second_stage(c);
@@ -97,16 +98,19 @@ int main(int argc, char *argv[]) {
     }
     printf("finished creating copy\n");
     double start_time = omp_get_wtime();
-    std::vector<double> x_output = gauss(c, true);
+    std::vector<double> x_parallelized = gauss(c, true);
     double end_time = omp_get_wtime();
     double Tp = end_time - start_time;
     printf("Parallized it took: %f seconds\n", Tp);
     start_time = omp_get_wtime();
-    std::vector<double> x_p = gauss(copy_of_original, false);
+    std::vector<double> x_sequential = gauss(copy_of_original, false);
     end_time = omp_get_wtime();
     double Ts = end_time - start_time;
     printf("Sequential it took: %f seconds\n", Ts);
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(OUTPUT_TIME_DECIMAL_PRECISION);
+    oss << "X_" << Ts << "_" << Tp << ".csv";
     printf("Saving output\n");
-    save_matrix(x_output, "solCpp.csv");
+    save_matrix(x_parallelized, oss.str());
     return 0;
 }
