@@ -85,8 +85,14 @@ std::vector<double> gauss(matrix c, bool parallelize) {
 
 
 int main(int argc, char *argv[]) {
-    auto result = parse_arguments(argc, argv);
-    fs::path input_path(fs::absolute(result["input"].as<std::string>()));
+    printf("Provide input file: ");
+    std::string input_file;
+    std::cin >> input_file;
+
+    fs::path input_path(fs::absolute(input_file));
+    if (!fs::exists(input_path)) {
+        printf("Provided file: %s doesnt exists, terminating.\n", input_path.c_str());
+    }
     printf("Parsing input csv file\n");
     matrix c = parse_csv(input_path);
     printf("Calculating\n");
