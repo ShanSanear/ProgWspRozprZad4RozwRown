@@ -106,20 +106,13 @@ int main(int argc, char *argv[]) {
     printf("Parsing input csv file\n");
     matrix c = parse_csv(input_path);
     printf("Calculating\n");
-    printf("Creating copy of the original matrix\n");
-    matrix copy_of_original;
-    copy_of_original.resize(c.size());
-    for (std::size_t i = 0; i < copy_of_original.size(); i++) {
-        copy_of_original[i] = c[i];
-    }
-    printf("finished creating copy\n");
     double start_time = omp_get_wtime();
     std::vector<double> x_parallelized = gauss(c, true);
     double end_time = omp_get_wtime();
     double Tp = end_time - start_time;
     printf("Parallized it took: %f seconds\n", Tp);
     start_time = omp_get_wtime();
-    std::vector<double> x_sequential = gauss(copy_of_original, false);
+    std::vector<double> x_sequential = gauss(c, false);
     end_time = omp_get_wtime();
     double Ts = end_time - start_time;
     printf("Sequential it took: %f seconds\n", Ts);
