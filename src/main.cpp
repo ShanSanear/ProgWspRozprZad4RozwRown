@@ -35,6 +35,10 @@ namespace datalogger {
         ss << arg;
         return std::move(ss).str();
     }
+
+    std::string header() {
+        return std::string("DATE;TIME;INPUT_FILE;EQUATION_COUNT;Ts;Tp;PROCESS_COUNT;CHUNK_SIZE");
+    }
 }
 
 matrix load_csv(const fs::path &input_csv_file) {
