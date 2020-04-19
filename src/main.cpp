@@ -52,7 +52,7 @@ void save_matrix(const std::vector<double> &row, const std::string &output_file_
     output << oss.str() << std::endl;
 }
 
-matrix &first_stage(matrix &c, bool parallelize, int processors_count, bool is_schedule_static, int chunk_size) {
+matrix &first_stage(matrix &c, bool parallelize, int processors_count, int chunk_size) {
     int n = c.size();
     int r, i, j;
     if (!parallelize) {
@@ -61,31 +61,6 @@ matrix &first_stage(matrix &c, bool parallelize, int processors_count, bool is_s
             for (i = r + 1; i < n; i++) {
                 for (j = r + 1; j < n + 1; j++) {
                     c[i][j] = c[i][j] - (c[i][r] / c[r][r] * c[r][j]);
-                }
-            }
-        }
-    } else if (is_schedule_static) {
-        if (chunk_size != 0) {
-            printf("First stage using static schedule with %d processors and %d chunks\n",
-                   processors_count, chunk_size);
-            for (r = 0; r < n - 1; r++) {
-#pragma omp parallel for ordered shared(c, n, parallelize, r) num_threads(processors_count) private(i, j) default(none) \
-        schedule(static)
-                for (i = r + 1; i < n; i++) {
-                    for (j = r + 1; j < n + 1; j++) {
-                        c[i][j] = c[i][j] - (c[i][r] / c[r][r] * c[r][j]);
-                    }
-                }
-            }
-        } else {
-            printf("First stage using static schedule with %d processors\n", processors_count);
-            for (r = 0; r < n - 1; r++) {
-#pragma omp parallel for ordered shared(c, n, parallelize, chunk_size, r) num_threads(processors_count) private( i, j) \
-        default(none) schedule(static, chunk_size)
-                for (i = r + 1; i < n; i++) {
-                    for (j = r + 1; j < n + 1; j++) {
-                        c[i][j] = c[i][j] - (c[i][r] / c[r][r] * c[r][j]);
-                    }
                 }
             }
         }
@@ -193,12 +168,12 @@ second_stage(const matrix &c, bool parallelize, int processors_count, bool is_sc
     return x;
 }
 
-std::vector<double> gauss(matrix c, bool parallelize, int processors_count, bool is_schedule_static, int chunk_size) {
+std::vector<double> gauss(matrix c, bool parallelize, int processors_count, int chunk_size) {
 
     printf("Calculating first stage\n");
-    c = first_stage(c, parallelize, processors_count, is_schedule_static, chunk_size);
+    c = first_stage(c, parallelize, processors_count, chunk_size);
     printf("Calculating second stage\n");
-    std::vector<double> x = second_stage(c, parallelize, processors_count, is_schedule_static, chunk_size);
+    std::vector<double> x = second_stage(c, parallelize, processors_count, chunk_size);
     return x;
 
 }
@@ -237,12 +212,12 @@ int main(int argc, char *argv[]) {
         matrix c = load_csv(input_path);
         printf("Calculating\n");
         double start_time = omp_get_wtime();
-        std::vector<double> x_parallelized = gauss(c, true, process_count, is_schedule_static, chunk_size);
+        std::vector<double> x_parallelized = gauss(c, true, process_count, chunk_size);
         double end_time = omp_get_wtime();
         double Tp = end_time - start_time;
         printf("Parallized it took: %f seconds\n", Tp);
         start_time = omp_get_wtime();
-        std::vector<double> x_sequential = gauss(c, false, process_count, is_schedule_static, chunk_size);
+        std::vector<double> x_sequential = gauss(c, false, process_count, chunk_size);
         end_time = omp_get_wtime();
         double Ts = end_time - start_time;
         printf("Sequential it took: %f seconds\n", Ts);
