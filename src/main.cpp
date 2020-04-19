@@ -172,8 +172,12 @@ std::vector<double> gauss(matrix c, bool parallelize, int processors_count, int 
 
 
 int main(int argc, char *argv[]) {
+    bool datalogger_already_created = fs::exists("datalogger.log");
     std::ofstream data_logger_file;
-    data_logger_file.open("datalogger.log", std::ios_base::app); // append instead of overwrite
+    data_logger_file.open("datalogger.log", std::ios_base::app);
+    if(!datalogger_already_created) {
+        data_logger_file << datalogger::header() << std::endl;
+    }
     std::string prompt;
     prompt = "N";
     int chunk_size, process_count;
