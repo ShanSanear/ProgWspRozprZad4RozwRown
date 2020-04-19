@@ -21,7 +21,7 @@ struct DataloggerEntry {
     int equation_count{};
 };
 
-matrix parse_csv(const fs::path &input_csv_file) {
+matrix load_csv(const fs::path &input_csv_file) {
     std::ifstream data(input_csv_file);
     std::string line;
     // Skipping required dimension lines
@@ -231,8 +231,8 @@ int main(int argc, char *argv[]) {
         std::time_t execution_started_time = std::chrono::system_clock::to_time_t(execution_start);
         std::string execution_started = std::ctime(&execution_started_time);
         printf("%s\n", execution_started.c_str());
-        printf("Parsing input csv file\n");
-        matrix c = parse_csv(input_path);
+        printf("Loading input csv file\n");
+        matrix c = load_csv(input_path);
         printf("Calculating\n");
         double start_time = omp_get_wtime();
         std::vector<double> x_parallelized = gauss(c, true, process_count, is_schedule_static, chunk_size);
