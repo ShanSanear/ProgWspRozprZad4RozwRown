@@ -95,7 +95,7 @@ matrix &first_stage(matrix &c, bool parallelize, int processors_count, int chunk
 
 
 std::vector<double>
-second_stage(const matrix &c, bool parallelize, int processors_count, bool is_schedule_static, int chunk_size) {
+second_stage(const matrix &c, bool parallelize, int processors_count, int chunk_size) {
     int n = c.size();
     std::vector<double> x(n);
     double s = 0.0;
@@ -110,7 +110,7 @@ second_stage(const matrix &c, bool parallelize, int processors_count, bool is_sc
             }
             x[i] = (c[i][n] - s) / c[i][i];
         }
-    } else if (is_schedule_static) {
+    } else {
         if (chunk_size != 0) {
             printf("Second stage using static schedule with %d processors and %d chunks\n",
                    processors_count, chunk_size);
@@ -134,32 +134,6 @@ second_stage(const matrix &c, bool parallelize, int processors_count, bool is_sc
                     s += c[i][r] * x[r];
                 }
 
-                x[i] = (c[i][n] - s) / c[i][i];
-            }
-        }
-    } else {
-        if (chunk_size != 0) {
-            printf("Second stage using dynamic schedule with %d processors and %d chunks\n",
-                   processors_count, chunk_size);
-#pragma omp parallel for shared(c, n, parallelize, chunk_size, x) num_threads(processors_count) private(r, i, s) \
-        default(none) schedule(dynamic, chunk_size)
-            for (i = n - 2; i >= 0; i--) {
-                s = 0;
-                for (r = i; r < n; r++) {
-                    s = s + c[i][r] * x[r];
-                }
-                x[i] = (c[i][n] - s) / c[i][i];
-            }
-        } else {
-            printf("Second stage using dynamic schedule with %d processors\n",
-                   processors_count);
-#pragma omp parallel for shared(c, n, parallelize, chunk_size, x) num_threads(processors_count) private(r, i, s) \
-        default(none) schedule(dynamic)
-            for (i = n - 2; i >= 0; i--) {
-                s = 0;
-                for (r = i; r < n; r++) {
-                    s = s + c[i][r] * x[r];
-                }
                 x[i] = (c[i][n] - s) / c[i][i];
             }
         }
