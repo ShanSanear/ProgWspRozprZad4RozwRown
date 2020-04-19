@@ -5,21 +5,37 @@
 #include <filesystem>
 #include <iterator>
 #include <iostream>
+#include <chrono>
 
 const int OUTPUT_DATA_DECIMAL_PRECISION = 6;
 const int OUTPUT_TIME_DECIMAL_PRECISION = 5;
 using matrix = std::vector<std::vector<double>>;
 namespace fs = std::filesystem;
 
-struct DataloggerEntry {
-    std::string input_file;
-    double Tp{};
-    double Ts{};
-    int process_count{};
-    bool static_schedule{};
-    int chunk_size{};
-    int equation_count{};
-};
+namespace datalogger {
+    struct entry {
+        std::string start_execution;
+        std::string input_file;
+        int equation_count{};
+        double Ts{};
+        double Tp{};
+        int process_count{};
+        int chunk_size{};
+    };
+
+    std::ostream &operator<<(std::ostream &os, entry const &arg) {
+        os << std::setprecision(OUTPUT_TIME_DECIMAL_PRECISION);
+        os << arg.start_execution << ";" << arg.input_file << ";" << arg.equation_count << ";"
+           << arg.Ts << ";" << arg.Tp << arg.process_count << ";" << arg.chunk_size;
+        return os;
+    }
+
+    std::string to_string(entry const &arg) {
+        std::ostringstream ss;
+        ss << arg;
+        return std::move(ss).str();
+    }
+}
 
 matrix load_csv(const fs::path &input_csv_file) {
     std::ifstream data(input_csv_file);
@@ -158,7 +174,6 @@ int main(int argc, char *argv[]) {
     std::string prompt;
     prompt = "";
     int chunk_size, process_count;
-    bool is_schedule_static;
     while (prompt != "n") {
         printf("Provide input file: ");
         std::cin >> prompt;
@@ -167,20 +182,17 @@ int main(int argc, char *argv[]) {
             printf("Provided file: %s doesnt exists, terminating.\n", input_path.string().c_str());
             exit(1);
         }
-        DataloggerEntry current_data_logger_entry;
-        current_data_logger_entry.input_file = prompt;
+        datalogger::entry entry;
+        entry.input_file = prompt;
         chunk_size = 0;
         printf("Specify number of processors:\n");
         std::cin >> process_count;
-        printf("Specify type of schedule [static]/dynamic:\n");
-        std::cin >> prompt;
-        is_schedule_static = "dynamic" != prompt;
-        printf("Specify chunk size (0 = default for type of schedule):\n");
+        printf("Specify chunk size for static scheduling (0 = default):\n");
         std::cin >> chunk_size;
-        std::chrono::time_point execution_start = std::chrono::system_clock::now();
-        std::time_t execution_started_time = std::chrono::system_clock::to_time_t(execution_start);
-        std::string execution_started = std::ctime(&execution_started_time);
-        printf("%s\n", execution_started.c_str());
+        std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+        std::string started_exec(30, '\0');
+        std::strftime(&started_exec[0], started_exec.size(), "%Y-%m-%d %H:%M:%S", std::localtime(&now));
+        printf("Runtime started at: %s\n", started_exec.c_str());
         printf("Loading input csv file\n");
         matrix c = load_csv(input_path);
         printf("Calculating\n");
@@ -196,13 +208,21 @@ int main(int argc, char *argv[]) {
         printf("Sequential it took: %f seconds\n", Ts);
         std::ostringstream oss;
         oss << std::fixed << std::setprecision(OUTPUT_TIME_DECIMAL_PRECISION);
-        current_data_logger_entry.Ts = Ts;
-        current_data_logger_entry.Tp = Tp;
-        current_data_logger_entry.chunk_size = chunk_size;
+        entry.Ts = Ts;
+        entry.Tp = Tp;
+        entry.chunk_size = chunk_size;
+        entry.equation_count = c.size();
+        entry.start_execution = started_exec;
         oss << "X_" << Ts << "_" << Tp << ".csv";
         printf("Saving output\n");
         save_matrix(x_parallelized, oss.str());
-        data_logger_file << "AA" << std::endl;
+        data_logger_file << datalogger::to_string(entry) << std::endl;
+        printf("Exit? [Y]/N:\n");
+
+        std::cin >> prompt;
+        if (prompt == "n") {
+            prompt = "N";
+        }
     }
     data_logger_file.close();
     return 0;
