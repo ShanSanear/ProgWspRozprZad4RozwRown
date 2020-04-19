@@ -165,7 +165,7 @@ second_stage(const matrix &c, bool parallelize, int processors_count, bool is_sc
         if (chunk_size != 0) {
             printf("Second stage using dynamic schedule with %d processors and %d chunks\n",
                    processors_count, chunk_size);
-#pragma omp parallel for ordered shared(c, n, parallelize, chunk_size, x) num_threads(processors_count) private(r, i, s) \
+#pragma omp parallel for shared(c, n, parallelize, chunk_size, x) num_threads(processors_count) private(r, i, s) \
         default(none) schedule(dynamic, chunk_size)
             for (i = n - 2; i >= 0; i--) {
                 s = 0;
@@ -177,7 +177,7 @@ second_stage(const matrix &c, bool parallelize, int processors_count, bool is_sc
         } else {
             printf("Second stage using dynamic schedule with %d processors\n",
                    processors_count);
-#pragma omp parallel for ordered shared(c, n, parallelize, chunk_size, x) num_threads(processors_count) private(r, i, s) \
+#pragma omp parallel for shared(c, n, parallelize, chunk_size, x) num_threads(processors_count) private(r, i, s) \
         default(none) schedule(dynamic)
             for (i = n - 2; i >= 0; i--) {
                 s = 0;
