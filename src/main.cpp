@@ -14,7 +14,8 @@ namespace fs = std::filesystem;
 
 namespace datalogger {
     struct entry {
-        std::string start_execution;
+        std::string start_day;
+        std::string start_time;
         std::string input_file;
         int equation_count{};
         double Ts{};
@@ -25,8 +26,8 @@ namespace datalogger {
 
     std::ostream &operator<<(std::ostream &os, entry const &arg) {
         os << std::setprecision(OUTPUT_TIME_DECIMAL_PRECISION);
-        os << arg.start_execution << ";" << arg.input_file << ";" << arg.equation_count << ";"
-           << arg.Ts << ";" << arg.Tp << arg.process_count << ";" << arg.chunk_size;
+        os << arg.start_day.c_str() << ";" << arg.start_time.c_str() << ";" << arg.input_file.c_str() << ";"
+           << arg.equation_count << ";" << arg.Ts << ";" << arg.Tp << arg.process_count << ";" << arg.chunk_size;
         return os;
     }
 
