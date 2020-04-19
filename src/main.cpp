@@ -124,7 +124,7 @@ std::vector<double>
 second_stage(const matrix &c, bool parallelize, int processors_count, bool is_schedule_static, int chunk_size) {
     int n = c.size();
     std::vector<double> x(n);
-    double s;
+    double s = 0.0;
     int i, r;
     x[n - 1] = c[n - 1][n] / c[n - 1][n - 1];
     if (!parallelize) {
@@ -140,24 +140,26 @@ second_stage(const matrix &c, bool parallelize, int processors_count, bool is_sc
         if (chunk_size != 0) {
             printf("Second stage using static schedule with %d processors and %d chunks\n",
                    processors_count, chunk_size);
-#pragma omp parallel for ordered shared(c, n, parallelize, x) num_threads(processors_count) private(r, i, s) default(none) \
-        schedule(static)
             for (i = n - 2; i >= 0; i--) {
-                s = 0;
+                s = 0.0;
+#pragma omp parallel for shared(c, n, parallelize, x, i) num_threads(processors_count) private(r) default(none) \
+        schedule(static) reduction(+ : s)
                 for (r = i; r < n; r++) {
-                    s = s + c[i][r] * x[r];
+                    s += c[i][r] * x[r];
                 }
                 x[i] = (c[i][n] - s) / c[i][i];
             }
         } else {
             printf("Second stage using static schedule with %d processors\n", processors_count);
-#pragma omp parallel for ordered shared(c, n, parallelize, chunk_size, x) num_threads(processors_count) private(r, i, s) \
-        default(none) schedule(static, chunk_size)
+
             for (i = n - 2; i >= 0; i--) {
-                s = 0;
+                s = 0.0;
+#pragma omp parallel for shared(c, n, parallelize, chunk_size, x, i) num_threads(processors_count) private(r) \
+        default(none) schedule(static) reduction(+ : s)
                 for (r = i; r < n; r++) {
-                    s = s + c[i][r] * x[r];
+                    s += c[i][r] * x[r];
                 }
+
                 x[i] = (c[i][n] - s) / c[i][i];
             }
         }
