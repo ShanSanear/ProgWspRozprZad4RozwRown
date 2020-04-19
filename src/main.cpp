@@ -190,7 +190,7 @@ int main(int argc, char *argv[]) {
         printf("Specify chunk size for static scheduling (0 = default):\n");
         std::cin >> chunk_size;
         std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-        std::string started_exec(30, '\0');
+        std::string started_exec(19, '\0');
         std::strftime(&started_exec[0], started_exec.size(), "%Y-%m-%d %H:%M:%S", std::localtime(&now));
         printf("Runtime started at: %s\n", started_exec.c_str());
         printf("Loading input csv file\n");
