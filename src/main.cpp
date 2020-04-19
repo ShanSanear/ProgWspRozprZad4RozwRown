@@ -94,8 +94,8 @@ matrix &first_stage(matrix &c, bool parallelize, int processors_count, bool is_s
             printf("First stage using dynamic schedule with %d processors and %d chunks\n",
                    processors_count, chunk_size);
             for (r = 0; r < n - 1; r++) {
-#pragma omp parallel for ordered shared(c, n, parallelize, chunk_size, r) num_threads(processors_count) private(i, j) \
-        default(none) schedule(dynamic, chunk_size)
+#pragma omp parallel for shared(c, n, parallelize, chunk_size, r) num_threads(processors_count) private(i, j) \
+        default(none) schedule(guided, chunk_size)
                 for (i = r + 1; i < n; i++) {
                     for (j = r + 1; j < n + 1; j++) {
                         c[i][j] = c[i][j] - (c[i][r] / c[r][r] * c[r][j]);
@@ -106,8 +106,8 @@ matrix &first_stage(matrix &c, bool parallelize, int processors_count, bool is_s
             printf("First stage using dynamic schedule with %d processors\n",
                    processors_count);
             for (r = 0; r < n - 1; r++) {
-#pragma omp parallel for ordered shared(c, n, parallelize, chunk_size, r) num_threads(processors_count) private(i, j) \
-        default(none) schedule(dynamic)
+#pragma omp parallel for shared(c, n, parallelize, chunk_size, r) num_threads(processors_count) private(i, j) \
+        default(none) schedule(guided)
                 for (i = r + 1; i < n; i++) {
                     for (j = r + 1; j < n + 1; j++) {
                         c[i][j] = c[i][j] - (c[i][r] / c[r][r] * c[r][j]);
