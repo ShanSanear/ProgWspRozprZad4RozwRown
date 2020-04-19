@@ -197,9 +197,11 @@ int main(int argc, char *argv[]) {
         printf("Specify chunk size for static scheduling (0 = default):\n");
         std::cin >> chunk_size;
         std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-        std::string started_exec(30, '\0');
-        std::strftime(&started_exec[0], started_exec.size(), "%Y-%m-%d %H:%M:%S", std::localtime(&now));
-        printf("Runtime started at: %s\n", started_exec.c_str());
+        std::string start_day(30, '\0');
+        std::string start_time(30, '\0');
+        std::strftime(&start_day[0], start_day.size(), "%Y-%m-%d", std::localtime(&now));
+        std::strftime(&start_time[0], start_time.size(), "%H:%M:%S", std::localtime(&now));
+        printf("Runtime started at: %s %s\n", start_day.c_str(), start_time.c_str());
         printf("Loading input csv file\n");
         matrix c = load_csv(input_path);
         printf("Calculating\n");
