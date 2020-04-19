@@ -159,9 +159,7 @@ second_stage(const matrix &c, bool parallelize, int processors_count, int chunk_
 
 std::vector<double> gauss(matrix c, bool parallelize, int processors_count, int chunk_size) {
 
-    printf("Calculating first stage\n");
     c = first_stage(c, parallelize, processors_count, chunk_size);
-    printf("Calculating second stage\n");
     std::vector<double> x = second_stage(c, parallelize, processors_count, chunk_size);
     return x;
 
@@ -172,9 +170,9 @@ int main(int argc, char *argv[]) {
     std::ofstream data_logger_file;
     data_logger_file.open("datalogger.log", std::ios_base::app); // append instead of overwrite
     std::string prompt;
-    prompt = "";
+    prompt = "N";
     int chunk_size, process_count;
-    while (prompt != "n") {
+    while (prompt == "N") {
         printf("Provide input file: ");
         std::cin >> prompt;
         fs::path input_path(fs::absolute(prompt));
@@ -190,7 +188,7 @@ int main(int argc, char *argv[]) {
         printf("Specify chunk size for static scheduling (0 = default):\n");
         std::cin >> chunk_size;
         std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-        std::string started_exec(19, '\0');
+        std::string started_exec(30, '\0');
         std::strftime(&started_exec[0], started_exec.size(), "%Y-%m-%d %H:%M:%S", std::localtime(&now));
         printf("Runtime started at: %s\n", started_exec.c_str());
         printf("Loading input csv file\n");
