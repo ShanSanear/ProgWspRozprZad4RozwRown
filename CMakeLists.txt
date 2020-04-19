@@ -13,4 +13,4 @@ target_include_directories(cxxopts INTERFACE
         $<INSTALL_INTERFACE:include>
         )
 
-add_executable(ProgWspRozprZad4RozwRown src/main.cpp include/TextTable.h)
+add_executable(ProgWspRozprZad4RozwRown src/main.cpp)
