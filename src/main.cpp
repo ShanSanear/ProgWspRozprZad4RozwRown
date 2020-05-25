@@ -136,7 +136,7 @@ matrix &first_stage(matrix &c, int processors_count, const std::string &schedule
             proc_num = omp_get_thread_num();
             if (first_runs[proc_num]) {
                 first_runs[proc_num] = false;
-                printf("Processor %d started with i: %d", proc_num, i);
+                printf("Processor %d started with i: %d\n", proc_num, i);
             }
             for (j = r + 1; j < n + 1; j++) {
                 c[i][j] = c[i][j] - (c[i][r] / c[r][r] * c[r][j]);
@@ -152,17 +152,25 @@ second_stage(const matrix &c, int processors_count, const std::string &schedule_
     int n = c.size();
     std::vector<double> x(n);
     double s = 0.0;
-    int i, r;
+    int i, r, proc_num;
     x[n - 1] = c[n - 1][n] / c[n - 1][n - 1];
     printf("Second stage in parallel using schedule: %s\n", schedule_type_info.c_str());
+    std::vector<bool> first_runs(processors_count, true);
     for (i = n - 2; i >= 0; i--) {
         s = 0.0;
-#pragma omp parallel for shared(c, n, x, i) num_threads(processors_count) private(r) default(none) \
+#pragma omp parallel for shared(c, n, x, i, first_runs) num_threads(processors_count) private(r, proc_num) default(none) \
         schedule(runtime) reduction(+ : s)
         for (r = i; r < n; r++) {
+            proc_num = omp_get_thread_num();
+            if (first_runs[proc_num]) {
+                first_runs[proc_num] = false;
+                printf("Processor %d started with r: %d\n", proc_num, r);
+            }
             s += c[i][r] * x[r];
         }
         x[i] = (c[i][n] - s) / c[i][i];
+
+
     }
     return x;
 }
