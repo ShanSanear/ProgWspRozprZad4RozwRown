@@ -6,6 +6,7 @@
 #include <iterator>
 #include <iostream>
 #include <chrono>
+#include <list>
 
 const int OUTPUT_DATA_DECIMAL_PRECISION = 6;
 const int OUTPUT_TIME_DECIMAL_PRECISION = 5;
@@ -125,17 +126,20 @@ std::vector<double> second_stage_sequentially(const matrix &c) {
 
 matrix &first_stage(matrix &c, int processors_count, const std::string &schedule_type_info) {
     int n = c.size();
-    int r, i, j;
-#pragma omp parallel shared(c, n, r, schedule_type_info) num_threads(processors_count) private(i, j) default(none)
-    {
-        printf("First stage using schedule: %s on processor: %d\n", schedule_type_info.c_str(),
-               omp_get_thread_num());
-        for (r = 0; r < n - 1; r++) {
-#pragma omp for ordered schedule(static, 4)
-            for (i = r + 1; i < n; i++) {
-                for (j = r + 1; j < n + 1; j++) {
-                    c[i][j] = c[i][j] - (c[i][r] / c[r][r] * c[r][j]);
-                }
+    int r, i, j, proc_num;
+
+    std::vector<bool> first_runs(processors_count, true);
+    printf("First stage using schedule: %s\n", schedule_type_info.c_str());
+    for (r = 0; r < n - 1; r++) {
+#pragma omp parallel for shared(c, n, r, schedule_type_info, first_runs) num_threads(processors_count) private(i, j, proc_num) default(none) ordered schedule(runtime)
+        for (i = r + 1; i < n; i++) {
+            proc_num = omp_get_thread_num();
+            if (first_runs[proc_num]) {
+                first_runs[proc_num] = false;
+                printf("Processor %d started with i: %d", proc_num, i);
+            }
+            for (j = r + 1; j < n + 1; j++) {
+                c[i][j] = c[i][j] - (c[i][r] / c[r][r] * c[r][j]);
             }
         }
     }
