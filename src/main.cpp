@@ -6,7 +6,6 @@
 #include <iterator>
 #include <iostream>
 #include <chrono>
-#include <list>
 
 const int OUTPUT_DATA_DECIMAL_PRECISION = 6;
 const int OUTPUT_TIME_DECIMAL_PRECISION = 5;
