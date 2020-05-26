@@ -10,6 +10,7 @@
 
 const int OUTPUT_DATA_DECIMAL_PRECISION = 6;
 const int OUTPUT_TIME_DECIMAL_PRECISION = 5;
+const int MIN_SECOND_STAGE_LOOPS = 500;
 using matrix = std::vector<std::vector<double>>;
 namespace fs = std::filesystem;
 
@@ -126,21 +127,26 @@ std::vector<double> second_stage_sequentially(const matrix &c) {
 
 matrix &first_stage(matrix &c, int processors_count, const std::string &schedule_type_info) {
     int n = c.size();
-    int r, i, j,;
+    int r, i, j;
     bool first_run = true;
+    std::vector<bool> first_runs(processors_count, true);
     printf("First stage using schedule: %s\n", schedule_type_info.c_str());
     for (r = 0; r < n - 1; r++) {
-#pragma omp parallel for shared(c, n, r, schedule_type_info) num_threads(processors_count) firstprivate(first_run) \
-private(i, j, ) default(none) ordered schedule(runtime)
+#pragma omp parallel shared(c, n, r) num_threads(processors_count) firstprivate(first_run) private(i, j) default(none)
+#pragma omp for schedule(runtime) //collapse(2)
         for (i = r + 1; i < n; i++) {
-            for (j = r + 1; j < n + 1; j++) {
-                if (j == 1 && first_run) {
-                    first_run = false;
-                    printf("Processor %d started with i: %d and j: %d\n", omp_get_thread_num(), i, j);
+            if ((r == 0) & first_run) {
+#pragma omp critical
+                {
+                printf("Processor %d started first stage\n", omp_get_thread_num());
                 }
+                first_run = false;
+            }
+            for (j = r + 1; j < n + 1; j++) {
                 c[i][j] = c[i][j] - (c[i][r] / c[r][r] * c[r][j]);
             }
         }
+        first_run = false;
     }
     return c;
 }
@@ -150,27 +156,37 @@ std::vector<double>
 second_stage(const matrix &c, int processors_count, const std::string &schedule_type_info) {
     int n = c.size();
     std::vector<double> x(n);
-    double s = 0.0;
-    int i, r, proc_num;
+    double s;
+    int i, r;
     bool first_run = true;
     x[n - 1] = c[n - 1][n] / c[n - 1][n - 1];
     printf("Second stage in parallel using schedule: %s\n", schedule_type_info.c_str());
     std::vector<bool> first_runs(processors_count, true);
+
     for (i = n - 2; i >= 0; i--) {
         s = 0.0;
-#pragma omp parallel for shared(c, n, x, i, first_runs) num_threads(processors_count) private(r, proc_num) default(none) \
-        schedule(runtime) reduction(+ : s) firstprivate(first_run)
-        for (r = i; r < n; r++) {
-            proc_num = omp_get_thread_num();
-            if (first_runs[proc_num]) {
-                first_runs[proc_num] = false;
-                printf("Processor %d started with r: %d\n", proc_num, r);
+/* if(i + MIN_SECOND_STAGE_LOOPS < n) wynika z tego że zrównoleglenie dla dużej ilości pierwszych pętli nie ma sensu,
+ * więcej czasu jest zużywane na utworzenie procesu i jego zarządzanie niż jest to warte dla zrónoleglenia
+ * dla zaledwie kilka(naście) przebiegów. Więc zrównoleglenie w tym miejscu uruchomi się tylko po pewnej ilości przebiegów,
+ * lub wcale - dla małej ilości danych wejściowych możliwa jest kalibracja momentu rozpoczęcia zrównoleglenia poprzez
+ * zmodyfikowanie stałej MIN_SECOND_STAGE_LOOPS
+*/
+#pragma omp parallel shared(c, n, x, i, first_runs, s) num_threads(processors_count) firstprivate(first_run) \
+private(r) default(none) if (i + MIN_SECOND_STAGE_LOOPS < n)
+        {
+#pragma omp for schedule(runtime) reduction(+ : s)
+            for (r = i; r < n; r++) {
+                if ((i == 0) & first_run) {
+#pragma omp critical
+                    {
+                        printf("Processor %d ended second stage\n", omp_get_thread_num());
+                    }
+                    first_run = false;
+                }
+                s += c[i][r] * x[r];
             }
-            s += c[i][r] * x[r];
+            x[i] = (c[i][n] - s) / c[i][i];
         }
-        x[i] = (c[i][n] - s) / c[i][i];
-
-        first_run = false;
     }
     return x;
 }
