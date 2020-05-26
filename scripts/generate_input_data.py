@@ -56,8 +56,9 @@ def main():
     if not check:
         raise RuntimeError("Something went horribly wrong")
     csv_out = np.append(a, b, axis=1)
-
+    print(f"Saving output file to: {csv_out_path}")
     save_to_csv(csv_out_path, csv_out, size=csv_out.shape[0])
+    print(f"Saving solution file to: {solution_path}")
     solution = solution.transpose()
     save_to_csv(solution_path, solution, size=solution.shape[1])
 
