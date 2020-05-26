@@ -126,19 +126,18 @@ std::vector<double> second_stage_sequentially(const matrix &c) {
 
 matrix &first_stage(matrix &c, int processors_count, const std::string &schedule_type_info) {
     int n = c.size();
-    int r, i, j, proc_num;
-
-    std::vector<bool> first_runs(processors_count, true);
+    int r, i, j,;
+    bool first_run = true;
     printf("First stage using schedule: %s\n", schedule_type_info.c_str());
     for (r = 0; r < n - 1; r++) {
-#pragma omp parallel for shared(c, n, r, schedule_type_info, first_runs) num_threads(processors_count) private(i, j, proc_num) default(none) ordered schedule(runtime)
+#pragma omp parallel for shared(c, n, r, schedule_type_info) num_threads(processors_count) firstprivate(first_run) \
+private(i, j, ) default(none) ordered schedule(runtime)
         for (i = r + 1; i < n; i++) {
-            proc_num = omp_get_thread_num();
-            if (first_runs[proc_num]) {
-                first_runs[proc_num] = false;
-                printf("Processor %d started with i: %d\n", proc_num, i);
-            }
             for (j = r + 1; j < n + 1; j++) {
+                if (j == 1 && first_run) {
+                    first_run = false;
+                    printf("Processor %d started with i: %d and j: %d\n", omp_get_thread_num(), i, j);
+                }
                 c[i][j] = c[i][j] - (c[i][r] / c[r][r] * c[r][j]);
             }
         }
@@ -153,13 +152,14 @@ second_stage(const matrix &c, int processors_count, const std::string &schedule_
     std::vector<double> x(n);
     double s = 0.0;
     int i, r, proc_num;
+    bool first_run = true;
     x[n - 1] = c[n - 1][n] / c[n - 1][n - 1];
     printf("Second stage in parallel using schedule: %s\n", schedule_type_info.c_str());
     std::vector<bool> first_runs(processors_count, true);
     for (i = n - 2; i >= 0; i--) {
         s = 0.0;
 #pragma omp parallel for shared(c, n, x, i, first_runs) num_threads(processors_count) private(r, proc_num) default(none) \
-        schedule(runtime) reduction(+ : s)
+        schedule(runtime) reduction(+ : s) firstprivate(first_run)
         for (r = i; r < n; r++) {
             proc_num = omp_get_thread_num();
             if (first_runs[proc_num]) {
@@ -170,7 +170,7 @@ second_stage(const matrix &c, int processors_count, const std::string &schedule_
         }
         x[i] = (c[i][n] - s) / c[i][i];
 
-
+        first_run = false;
     }
     return x;
 }
@@ -214,8 +214,10 @@ int main(int argc, char *argv[]) {
         std::cin >> process_count;
         printf("Specify schedule type (static, dynamic, guided, auto[default]):\n");
         std::cin >> schedule_type;
-        printf("Specify chunk size scheduling (0 = default):\n");
-        std::cin >> chunk_size;
+        if (schedule_type != "auto") {
+            printf("Specify chunk size scheduling (0 = default):\n");
+            std::cin >> chunk_size;
+        }
         schedule_type_info = set_schedule_type(schedule_type, chunk_size);
         std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
         std::string start_day(30, '\0');
