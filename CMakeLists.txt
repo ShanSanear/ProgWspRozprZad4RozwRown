@@ -10,7 +10,7 @@ set(CMAKE_EXE_LINKER_FLAGS " -static")
 target_link_libraries(cxxopts INTERFACE -static-libgcc -static-libstdc++)
 target_include_directories(cxxopts INTERFACE
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>
         )
+
 
 add_executable(ProgWspRozprZad4RozwRown src/main.cpp)
